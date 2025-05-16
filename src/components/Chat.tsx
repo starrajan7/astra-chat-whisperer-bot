@@ -27,65 +27,54 @@ export const Chat = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
-    
-    const userMessage = { role: 'user' as const, content: input };
+
+    const userMessage = { role: "user" as const, content: input };
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsLoading(true);
-    
+
     try {
-      // Create a data object with the exact structure required by the API
-      const requestData = {
-        method: 'POST',
+      const targetUrl = "/langflow";
+
+      const response = await fetch(targetUrl, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          // Include the original request details and the authorization header
-          url: 'https://api.langflow.astra.datastax.com/lf/5ec9bcb6-b2bd-43c8-a3b8-bfaad0c4cbfc/api/v1/run/7279fafc-58db-4ed9-9c7d-4f6e76833cc5?stream=false',
-          authHeader: 'Bearer AstraCS:vwmwMjWBiIapfZMefxTvyrtv:a7ddb793fe1f964a6eaf0dcd7aaf7a9f6545b758e1405e51b1894526e9fe4577',
-          data: {
-            input_value: input,
-            output_type: "chat",
-            input_type: "chat"
-          }
-        })
-      };
-      
-      // Use the CORS proxy to bypass the CORS restriction
-      const response = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.langflow.astra.datastax.com/lf/5ec9bcb6-b2bd-43c8-a3b8-bfaad0c4cbfc/api/v1/run/7279fafc-58db-4ed9-9c7d-4f6e76833cc5?stream=false'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer AstraCS:vwmwMjWBiIapfZMefxTvyrtv:a7ddb793fe1f964a6eaf0dcd7aaf7a9f6545b758e1405e51b1894526e9fe4577'
+          "Content-Type": "application/json",
+          Authorization:
+            "Bearer AstraCS:vwmwMjWBiIapfZMefxTvyrtv:a7ddb793fe1f964a6eaf0dcd7aaf7a9f6545b758e1405e51b1894526e9fe4577",
         },
         body: JSON.stringify({
           input_value: input,
           output_type: "chat",
-          input_type: "chat"
-        })
+          input_type: "chat",
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
-      // Handle response based on the API's output format
-      const botMessage = { 
-        role: 'assistant' as const, 
-        content: data?.output || "I'm not sure how to respond to that."
+
+      const botMessage = {
+        role: "assistant" as const,
+        content:
+          data?.outputs?.[0]?.outputs?.[0]?.outputs?.message?.message ||
+          "I'm not sure how to respond to that.",
       };
-      
+
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
       toast.error("Failed to get a response. Please try again.");
-      setMessages((prev) => [...prev, { 
-        role: 'assistant', 
-        content: "I'm having trouble connecting right now. Please try again later." 
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "I'm having trouble connecting right now. Please try again later.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
