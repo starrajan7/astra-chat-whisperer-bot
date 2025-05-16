@@ -1,7 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -35,7 +34,26 @@ export const Chat = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('https://api.langflow.astra.datastax.com/lf/5ec9bcb6-b2bd-43c8-a3b8-bfaad0c4cbfc/api/v1/run/7279fafc-58db-4ed9-9c7d-4f6e76833cc5?stream=false', {
+      // Create a data object with the exact structure required by the API
+      const requestData = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // Include the original request details and the authorization header
+          url: 'https://api.langflow.astra.datastax.com/lf/5ec9bcb6-b2bd-43c8-a3b8-bfaad0c4cbfc/api/v1/run/7279fafc-58db-4ed9-9c7d-4f6e76833cc5?stream=false',
+          authHeader: 'Bearer AstraCS:vwmwMjWBiIapfZMefxTvyrtv:a7ddb793fe1f964a6eaf0dcd7aaf7a9f6545b758e1405e51b1894526e9fe4577',
+          data: {
+            input_value: input,
+            output_type: "chat",
+            input_type: "chat"
+          }
+        })
+      };
+      
+      // Use the CORS proxy to bypass the CORS restriction
+      const response = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.langflow.astra.datastax.com/lf/5ec9bcb6-b2bd-43c8-a3b8-bfaad0c4cbfc/api/v1/run/7279fafc-58db-4ed9-9c7d-4f6e76833cc5?stream=false'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,7 +73,6 @@ export const Chat = () => {
       const data = await response.json();
       
       // Handle response based on the API's output format
-      // This may need to be adjusted based on the actual response structure
       const botMessage = { 
         role: 'assistant' as const, 
         content: data?.output || "I'm not sure how to respond to that."
